@@ -1,0 +1,52 @@
+<launch>
+  <arg name="model" default="omni" doc="[omni]"/>
+  <arg name="paused" default="false"/>
+  <arg name="gazebo_gui" default="true"/>
+
+  <arg name="urdf_file" default="$(find xacro)/xacro --inorder '$(find omni_robot_description)/robots/$(arg model)_robot.urdf.xacro'"/>
+
+  <param name="robot_description" command="$(arg urdf_file)"/>
+
+  <include
+    file="$(find gazebo_ros)/launch/empty_world.launch">
+    <!-- <arg name="world" default="$(find )/worlds/.world"/> -->
+    <arg name="paused" value="$(arg paused)"/>
+    <arg name="gui" value="$(arg gazebo_gui)"/>
+  </include>
+
+  <node
+    name="joint_state_publisher"
+    pkg="joint_state_publisher"
+    type="joint_state_publihser"/>
+
+  <node
+    name="robot_state_publisher"
+    pkg="robot_state_publisher"
+    type="robot_state_publisher"
+    output="screen">
+    <param 
+      name="publish_frequency"
+      type="double"
+      value="50.0"/>
+  </node>
+
+  <node
+    name="spawn_model"
+    pkg="gazebo_ros"
+    type="spawn_model"
+    args="-urdf -model omni -param robot_description"
+    output="screen"/>
+
+  <node
+    name="tf_footprint_base"
+    pkg="tf"
+    type="static_transform_publisher"
+    args="0 0 0 0 0 0 base_link base_footprint 40" />
+
+  <node
+    name="fake_joint_calibration"
+    pkg="rostopic"
+    type="rostopic"
+    args="pub /calibrated std_msgs/Bool true" />
+
+</launch>
